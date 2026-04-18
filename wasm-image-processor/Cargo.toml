@@ -1,0 +1,12 @@
+[package]
+name = "wasm-image-processor"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+# 画像処理（jpegやpngのデコード・エンコード機能のみを有効化してWASMを軽量に保つ）
+image = { version = "0.24", default-features = false, features = ["jpeg", "png", "webp"] }

@@ -10,6 +10,8 @@ namespace MinimalChat.Backend.Features.Messages;
 public interface IChatClient
 {
     Task ReceiveMessage(object message);
+    // ↓ WebRTC用のシグナル受信メソッドを追加
+    Task ReceiveSignal(Guid senderId, string type, string payload);
 }
 
 /// <summary>
@@ -69,5 +71,16 @@ public class ChatHub : Hub<IChatClient>
 
         // ルーム（グループ）全員に対して即時配信
         await Clients.Group(roomId.ToString()).ReceiveMessage(payload);
+    }
+
+    /// <summary>
+    /// WebRTCのシグナリングデータ（Offer, Answer, ICE Candidate）を中継します。
+    /// データベースには一切保存せず、自分以外のルーム参加者に即座にパスします。
+    /// </summary>
+    public async Task SendSignal(Guid roomId, Guid senderId, string type, string payload)
+    {
+        // 自分自身（Context.ConnectionId）を除外して、ルーム内の他メンバーに送信
+        await Clients.GroupExcept(roomId.ToString(), Context.ConnectionId)
+                     .ReceiveSignal(senderId, type, payload);
     }
 }
