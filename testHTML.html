@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Minimal Chat - SignalR Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #121212;
+            color: #00ffcc;
+            padding: 20px;
+        }
+
+        input,
+        button {
+            padding: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>SignalR Connection Test</h2>
+    <div id="status">接続中...</div>
+
+    <input type="text" id="msgInput" placeholder="メッセージを入力..." disabled>
+    <button id="sendBtn" disabled>送信</button>
+
+    <ul id="messages"></ul>
+
+    <script>
+        // ★先ほどのREST APIテストで取得したIDに書き換えてください
+        const roomId = "68fbd66f-2077-4094-a689-a28ddf793559";
+        const userId = "1b6fc941-8782-4e30-bbf2-24e1a77de8e1";
+
+        // バックエンドのURLに合わせてください（例: http://localhost:5000）
+        const backendUrl = "http://localhost:5240";
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(`${backendUrl}/hubs/chat`)
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        // メッセージ受信時のイベント
+        connection.on("ReceiveMessage", (message) => {
+            console.log("受信ペイロード:", message);
+            const li = document.createElement("li");
+            li.textContent = `[${new Date(message.sentAt).toLocaleTimeString()}] ${message.content}`;
+            document.getElementById("messages").prepend(li);
+        });
+
+        // 接続開始とルーム参加
+        async function start() {
+            try {
+                await connection.start();
+                document.getElementById("status").innerText = "SignalR 接続成功！ (ルーム参加完了)";
+
+                // ハブの JoinRoomContext メソッドを呼び出し
+                await connection.invoke("JoinRoomContext", roomId);
+
+                document.getElementById("msgInput").disabled = false;
+                document.getElementById("sendBtn").disabled = false;
+            } catch (err) {
+                console.error(err);
+                document.getElementById("status").innerText = "接続エラー (F12でコンソールを確認)";
+            }
+        }
+
+        // 送信ボタンの処理
+        document.getElementById("sendBtn").addEventListener("click", async () => {
+            const input = document.getElementById("msgInput");
+            const content = input.value;
+            if (!content) return;
+
+            try {
+                // ハブの SendMessage メソッドを呼び出し
+                await connection.invoke("SendMessage", roomId, userId, "Text", content);
+                input.value = ""; // 送信後にクリア
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        // 実行
+        start();
+    </script>
+</body>
+
+</html>
