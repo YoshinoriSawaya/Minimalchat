@@ -33,7 +33,7 @@ export const useSignalR = (roomId: string | undefined, onMessageReceived: (msg: 
             try {
                 await newConnection.start();
 
-                // 接続成功後にマウントされているか再確認
+                // 接続が完了した瞬間にアンマウントされていないかチェック
                 if (!isMounted) {
                     await newConnection.stop();
                     return;
@@ -42,11 +42,13 @@ export const useSignalR = (roomId: string | undefined, onMessageReceived: (msg: 
                 await newConnection.invoke("JoinRoomContext", roomId);
                 setConnection(newConnection);
             } catch (error: any) {
-                // ReactのStrictModeによる中断(AbortError)は無視する
-                if (error.name === 'AbortError' || error.message?.includes("stopped during negotiation")) {
-                    return;
+                // React 18 Strict Mode による中断エラーを無視
+                const isAbortError = error.name === 'AbortError' ||
+                    error.message?.includes("stopped during negotiation");
+
+                if (!isAbortError) {
+                    console.error("SignalR Connection Error: ", error);
                 }
-                console.error("SignalR Connection Error: ", error);
             }
         };
 

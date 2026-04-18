@@ -54,8 +54,22 @@ public static class JoinRoom
                 };
                 db.RoomMembers.Add(member);
             }
+            // --- ここから修正 ---
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // ReactのStrict Mode等による同時リクエストの競合対策
+                // 別スレッドのリクエストが直前に Insert を完了させ、制約違反が発生した場合。
+                // 目的（ユーザーをルームに参加させる）はすでに達成されているため、正常終了として扱う。
 
-            await db.SaveChangesAsync();
+                // ※ もし正確な JoinedAt が必要な場合はここでDBから再取得しますが、
+                // フロントエンド側でこの戻り値を厳密に使っていない場合は、
+                // メモリ上にある member の現在時刻をそのまま返しても実用上問題ありません。
+            }
+            // --- ここまで修正 ---
 
             return Results.Ok(new
             {
