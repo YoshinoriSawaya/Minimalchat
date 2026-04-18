@@ -1,5 +1,5 @@
 // src/features/room/hooks/useSignalR.ts
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { type Message } from '../types';
 
@@ -32,9 +32,20 @@ export const useSignalR = (roomId: string | undefined, onMessageReceived: (msg: 
         const startConnection = async () => {
             try {
                 await newConnection.start();
+
+                // 接続成功後にマウントされているか再確認
+                if (!isMounted) {
+                    await newConnection.stop();
+                    return;
+                }
+
                 await newConnection.invoke("JoinRoomContext", roomId);
-                if (isMounted) setConnection(newConnection);
-            } catch (error) {
+                setConnection(newConnection);
+            } catch (error: any) {
+                // ReactのStrictModeによる中断(AbortError)は無視する
+                if (error.name === 'AbortError' || error.message?.includes("stopped during negotiation")) {
+                    return;
+                }
                 console.error("SignalR Connection Error: ", error);
             }
         };
@@ -43,8 +54,14 @@ export const useSignalR = (roomId: string | undefined, onMessageReceived: (msg: 
 
         return () => {
             isMounted = false;
-            newConnection.stop();
+            // 接続を停止（交渉中の場合はここでAbortErrorが発生する）
+            newConnection.stop().catch(() => {
+                // 停止時のエラーは通常無視してOK
+            });
+            setConnection(null);
         };
+        // 注意: onMessageReceived を依存配列に入れる場合、
+        // 呼び出し側で useCallback を使っていないと、レンダリングのたびに再接続されます。
     }, [roomId, onMessageReceived]);
 
     return { connection };
