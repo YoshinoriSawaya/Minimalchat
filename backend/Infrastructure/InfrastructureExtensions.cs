@@ -16,7 +16,11 @@ public static class InfrastructureExtensions
             options.UseSqlite(connectionString));
 
         // 2. SignalRの追加
-        services.AddSignalR();
+        // services.AddSignalR();
+        services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = true; // 開発中のみtrueにする
+        });
 
         // 3. CORSの設定
         services.AddCors(options =>
@@ -58,7 +62,7 @@ public static class InfrastructureExtensions
 
         // DBマイグレーション
         var db = services.GetRequiredService<AppDbContext>();
-        db.Database.EnsureCreated();
+        await db.Database.MigrateAsync();
 
         // S3ライフサイクルポリシー適用
         var storageInit = services.GetRequiredService<StorageInitializer>();

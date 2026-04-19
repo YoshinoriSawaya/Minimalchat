@@ -1,7 +1,53 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { type Message } from '../types';
 
-export const MessageList = ({ messages, currentUserId }: { messages: Message[], currentUserId: string }) => {
+const ImageBubble = ({
+    message,
+    markImageAsAccessed
+}: {
+    message: Message;
+    markImageAsAccessed: (id: string) => void;
+}) => {
+    const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        // キャッシュ（Blob）が存在する場合
+        if (message.localBlob) {
+            // 1. Blobからブラウザ内専用のURLを生成して表示
+            const url = URL.createObjectURL(message.localBlob);
+            setObjectUrl(url);
+
+            // 2. サーバーに「ローカルに確保したからS3から消してヨシ！」と通知する
+            markImageAsAccessed(message.id);
+
+            // クリーンアップ関数（コンポーネントのアンマウント時やBlob変更時にメモリを解放）
+            return () => {
+                URL.revokeObjectURL(url);
+            };
+        }
+    }, [message.id, message.localBlob, markImageAsAccessed]);
+
+    // Blobがまだ無い（または変換前）なら、S3のURL(content)をフォールバックとして使う
+    const src = objectUrl || message.content;
+
+    return (
+        <img
+            src={src}
+            alt="画像"
+            style={{ maxWidth: '100%', borderRadius: '4px', display: 'block' }}
+        />
+    );
+};
+
+export const MessageList = ({
+    messages,
+    currentUserId,
+    markImageAsAccessed
+}: {
+    messages: Message[],
+    currentUserId: string,
+    markImageAsAccessed: (id: string) => void;
+}) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // 新しいメッセージが来たらスクロール
@@ -28,7 +74,10 @@ export const MessageList = ({ messages, currentUserId }: { messages: Message[], 
                             wordBreak: 'break-word'
                         }}>
                             {m.type === 'Image' ? (
-                                <img src={m.content} alt="画像" style={{ maxWidth: '100%', borderRadius: '4px', display: 'block' }} />
+                                <ImageBubble
+                                    message={m}
+                                    markImageAsAccessed={markImageAsAccessed}
+                                />
                             ) : (
                                 m.content
                             )}

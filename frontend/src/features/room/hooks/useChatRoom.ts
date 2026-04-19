@@ -134,10 +134,24 @@ export const useChatRoom = (roomId: string | undefined, userId: string, displayN
         }
     };
 
+    const markImageAsAccessed = useCallback(async (messageId: string) => {
+        // SignalRの接続が確立されていない場合はスキップ
+        if (!connection || connection.state !== "Connected") return;
+
+        try {
+            await connection.invoke("HandleImageAccess", messageId, userId);
+            console.log(`[Security] Notified server that image ${messageId} was accessed.`);
+        } catch (error) {
+            console.error("既読シグナルの送信に失敗しました:", error);
+        }
+    }, [connection, userId]);
+
+
     return {
         messages,
         connection,
         sendTextMessage,
-        sendImageMessage
+        sendImageMessage,
+        markImageAsAccessed
     };
 };

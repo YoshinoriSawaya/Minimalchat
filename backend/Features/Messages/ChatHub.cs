@@ -116,55 +116,86 @@ public class ChatHub : Hub<IChatClient>
     /// </summary>
     public async Task HandleImageAccess(Guid messageId, Guid userId)
     {
-        // ==========================================
-        // 1. SET フェーズ (既読フラグを立てる)
-        // ==========================================
+        // 1. レコードの取得
         var access = await _db.MessageAccesses
             .FirstOrDefaultAsync(x => x.MessageId == messageId && x.UserId == userId);
 
-        // 既に既読済み、または権限がない場合は即終了
-        if (access == null || access.IsRead) return;
+        if (access == null)
+        {
+            Console.WriteLine($"NoAccess: {messageId},{userId}");
+            return;
+        }
 
-        access.IsRead = true;
-        await _db.SaveChangesAsync();
+        // 2. まだ未読なら既読（IsRead = true）にする
+        if (!access.IsRead)
+        {
+            Console.WriteLine($"AccessReading: {messageId},{userId}");
+            access.IsRead = true;
+            await _db.SaveChangesAsync();
+        }
+        else
+        {
+            Console.WriteLine($"AccessWasReaded: {messageId},{userId}");
 
-        // ==========================================
-        // 2. DELETE フェーズ (全員読んだらサーバーから物理削除)
-        // ==========================================
-        var unreadCount = await _db.MessageAccesses
+        }
+
+        // 既に IsRead == true だった場合でも return せずに、ここから下のチェックを必ず実行する！
+
+        // 3. 残りの未読数をチェック
+        var remainingCount = await _db.MessageAccesses
             .CountAsync(x => x.MessageId == messageId && x.IsRead == false);
 
-        if (unreadCount == 0)
+        if (remainingCount == 0)
         {
+            Console.WriteLine("remainingCount == 0");
             var message = await _db.Messages.FindAsync(messageId);
-
-            if (message != null)
+            if (message != null && message.Type == "Image")
             {
-                if (message.Type == "Image")
+                Console.WriteLine("message != null && message.Type == 'Image'");
+                try
                 {
-                    try
-                    {
-                        // S3から画像を物理削除
-                        await _s3Client.DeleteObjectAsync("minimal-chat-images", message.Content);
-                        Console.WriteLine($"[Security] Image deleted from S3: {messageId}");
+                    // 1. URLを安全にパースする
+                    var uri = new Uri(message.Content);
 
-                        // S3削除成功後、DBの Message レコードを物理削除
-                        // （EF CoreのCascade Deleteにより、全員分の MessageAccess も自動的に物理削除されます）
-                        _db.Messages.Remove(message);
-                        await _db.SaveChangesAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[Error] S3 Delete failed for {messageId}. {ex.Message}");
-                    }
-                }
-                else
-                {
-                    // テキストメッセージなどの場合（S3不要）
+                    // 2. パス部分（例: /minimal-chat-images/rooms/123/abc.jpg）を取得
+                    var path = uri.AbsolutePath;
+
+                    // 3. バケット名の後ろから最後までを切り出す（これが正確なObjectKey）
+                    var bucketPrefix = "/minimal-chat-images/";
+                    var objectKey = path.Substring(path.IndexOf(bucketPrefix) + bucketPrefix.Length);
+
+                    // 4. （念のため）URLエンコードされている文字を元に戻す
+                    objectKey = Uri.UnescapeDataString(objectKey);
+
+                    // S3から物理削除
+                    await _s3Client.DeleteObjectAsync("minimal-chat-images", objectKey);
+                    Console.WriteLine($"[Security] Physically deleted from S3: {objectKey}");
+
+                    // S3成功後にDB物理削除
                     _db.Messages.Remove(message);
                     await _db.SaveChangesAsync();
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Error] S3 Delete failed for {messageId}. {ex.Message}");
+                }
             }
+            else if (message != null)
+            {
+                Console.WriteLine("message != null");
+                // テキストメッセージなどの場合（今回は画像だけですが念のため）
+                _db.Messages.Remove(message);
+                await _db.SaveChangesAsync();
+            }
+            else
+            {
+                Console.WriteLine("Not (message != null && message.Type == 'Image')");
+
+            }
+        }
+        else
+        {
+            Console.WriteLine("remainingCount > 0");
         }
     }
 }

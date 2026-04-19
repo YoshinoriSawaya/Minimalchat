@@ -11,7 +11,8 @@ export default function Room() {
     const { userId, displayName } = getUserContext();
 
     // ロジックを隠蔽したカスタムフック群
-    const { messages, connection, sendTextMessage, sendImageMessage } = useChatRoom(roomId, userId, displayName);
+    const { messages, connection, sendTextMessage, sendImageMessage, markImageAsAccessed } = useChatRoom(roomId, userId, displayName);
+
     const { startCall, endCall, isCalling, remoteAudioRef } = useWebRTC(connection, roomId, userId);
 
     const isConnected = !!connection;
@@ -32,6 +33,7 @@ export default function Room() {
             <MessageList
                 messages={messages}
                 currentUserId={userId}
+                markImageAsAccessed={markImageAsAccessed}
             />
 
             <MessageInput
