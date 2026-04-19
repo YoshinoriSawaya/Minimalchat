@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<Room> Rooms => Set<Room>();
     public DbSet<RoomMember> RoomMembers => Set<RoomMember>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<MessageAccess> MessageAccesses => Set<MessageAccess>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

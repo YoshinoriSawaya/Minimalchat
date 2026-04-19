@@ -56,3 +56,13 @@ public class Message
     public Room? Room { get; init; }
     public User? User { get; init; }
 }
+
+public class MessageAccess
+{
+    public Guid Id { get; set; }
+    public Guid MessageId { get; set; }
+    public Guid UserId { get; set; }
+
+    // 論理削除（既読）フラグ
+    public bool IsRead { get; set; } = false;
+}

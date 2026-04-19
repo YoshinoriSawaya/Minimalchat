@@ -4,4 +4,5 @@ export interface Message {
     type: string;
     content: string;
     sentAt: string;
+    localBlob?: Blob;
 }
