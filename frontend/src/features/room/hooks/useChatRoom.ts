@@ -13,6 +13,8 @@ export const useChatRoom = (roomId: string | undefined, userId: string, displayN
     const [isJoined, setIsJoined] = useState(false);
     const isJoining = useRef(false);
 
+    const [roomName, setRoomName] = useState<string>('');
+
     // IndexedDBのインスタンス生成（ルームごとに分離）
     const getMessageStore = useCallback(() => {
         return localforage.createInstance({
@@ -116,6 +118,22 @@ export const useChatRoom = (roomId: string | undefined, userId: string, displayN
 
     const { connection } = useSignalR(isJoined ? roomId : undefined, handleReceiveMessage);
 
+
+    useEffect(() => {
+        if (!connection) return;
+
+        const handleRoomNameUpdated = (newName: string) => {
+            setRoomName(newName);
+        };
+
+        connection.on("RoomNameUpdated", handleRoomNameUpdated);
+
+        // クリーンアップ関数（アンマウント時にリスナーを解除）
+        return () => {
+            connection.off("RoomNameUpdated", handleRoomNameUpdated);
+        };
+    }, [connection]);
+
     const sendTextMessage = async (text: string) => {
         if (!text.trim() || !connection || !roomId) return;
         await connection.invoke("SendMessage", roomId, userId, "Text", text);
@@ -146,10 +164,24 @@ export const useChatRoom = (roomId: string | undefined, userId: string, displayN
         }
     }, [connection, userId]);
 
+    const updateRoomName = useCallback(async (newName: string) => {
+        if (!roomId) return;
+        try {
+            // API呼び出し（※ apiClient.ts に関数を追加する必要があります）
+            await roomApi.updateRoomName(roomId, newName);
+            // 成功したら自分のUIも即座に更新する
+            setRoomName(newName);
+        } catch (error) {
+            console.error("ルーム名の更新に失敗しました", error);
+            alert("ルーム名の更新に失敗しました。");
+        }
+    }, [roomId]);
 
     return {
         messages,
         connection,
+        roomName,
+        updateRoomName,
         sendTextMessage,
         sendImageMessage,
         markImageAsAccessed

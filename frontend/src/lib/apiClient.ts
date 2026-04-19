@@ -12,6 +12,27 @@ export const roomApi = {
         });
     },
 
+    // ▼ 追加: ルームの基本情報（ルーム名など）を取得する
+    getRoom: async (roomId: string) => {
+        const res = await fetch(`${BACKEND_URL}/api/rooms/${roomId}`);
+        if (!res.ok) {
+            // ルームが存在しないなどのエラーハンドリング
+            throw new Error('Room not found');
+        }
+        return await res.json(); // 例: { id: "...", name: "プロジェクト会議室", createdAt: "..." }
+    },
+
+    // ▼ 追加: ルーム名を更新する
+    updateRoomName: async (roomId: string, name: string) => {
+        const res = await fetch(`${BACKEND_URL}/api/rooms/${roomId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        if (!res.ok) {
+            throw new Error('Failed to update room name');
+        }
+    },
     getHistory: async (roomId: string, userId: string): Promise<Message[]> => {
         const res = await fetch(`${BACKEND_URL}/api/rooms/${roomId}/messages?userId=${userId}`);
         if (!res.ok) return [];

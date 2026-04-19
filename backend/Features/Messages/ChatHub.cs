@@ -18,6 +18,8 @@ public interface IChatClient
     // ↓ 既読・削除のリアルタイム通知用
     Task MessageReadStateUpdated(Guid messageId, Guid userId);
     Task MessageDeleted(Guid messageId);
+
+    Task RoomNameUpdated(string newName); // 追加
 }
 
 /// <summary>

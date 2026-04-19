@@ -18,6 +18,7 @@ public class User
 public class Room
 {
     public Guid Id { get; init; } = Guid.NewGuid();
+    public string? Name { get; set; } // 追加: ルームの表示名
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 }
 
