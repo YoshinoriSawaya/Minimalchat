@@ -54,7 +54,7 @@ public static class JoinRoom
                 };
                 db.RoomMembers.Add(member);
             }
-            // --- ここから修正 ---
+
             try
             {
                 await db.SaveChangesAsync();
@@ -69,7 +69,7 @@ public static class JoinRoom
                 // フロントエンド側でこの戻り値を厳密に使っていない場合は、
                 // メモリ上にある member の現在時刻をそのまま返しても実用上問題ありません。
             }
-            // --- ここまで修正 ---
+
 
             return Results.Ok(new
             {
