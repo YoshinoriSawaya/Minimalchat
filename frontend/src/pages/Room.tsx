@@ -37,7 +37,7 @@ export default function Room() {
         if (!trimmedName) return;
 
         setLocalDisplayName(trimmedName);
-        localStorage.setItem('displayName', trimmedName);
+        localStorage.setItem('minimal_chat_display_name', trimmedName);
         // 必要に応じてここで userStore.setUserContext 等を呼び出し、全体の状態を更新します
     };
 

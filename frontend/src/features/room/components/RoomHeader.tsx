@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 export const RoomHeader = ({
     roomId,
-    roomName, // 追加: ルームの表示名
+    roomName,
     displayName,
     isCalling,
     startCall,
@@ -44,6 +44,7 @@ export const RoomHeader = ({
         setIsSettingsOpen(false);
     };
 
+    console.log("RoomName:" + roomName);
     // ルーム名が設定されていない場合はIDの一部を表示
     const displayRoomTitle = roomName ? roomName : `Room: ${roomId.substring(0, 8)}...`;
 

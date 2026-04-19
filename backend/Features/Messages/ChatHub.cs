@@ -52,14 +52,14 @@ public class ChatHub : Hub<IChatClient>
     /// </summary>
     public async Task SendMessage(Guid roomId, Guid userId, string type, string content)
     {
-        // 1. 送信者がルーム参加者かどうかの検証
-        // JoinedAt を考慮して「現在有効なメンバー」のみに限定することも可能です
+        // 1. 送信者を含むルームメンバーを、User情報込みで取得
         var currentMembers = _db.RoomMembers
+            .Include(rm => rm.User)
             .Where(rm => rm.RoomId == roomId)
             .ToList();
 
-        var isSenderMember = currentMembers.Any(rm => rm.UserId == userId);
-        if (!isSenderMember) return;
+        var senderMember = currentMembers.FirstOrDefault(rm => rm.UserId == userId);
+        if (senderMember == null) return;
 
         // 2. メッセージオブジェクトの作成
         var messageId = Guid.NewGuid();
@@ -92,6 +92,7 @@ public class ChatHub : Hub<IChatClient>
         {
             message.Id,
             message.UserId,
+            DisplayName = senderMember.User?.DisplayName ?? "名無し",
             message.Type,
             message.Content,
             message.SentAt

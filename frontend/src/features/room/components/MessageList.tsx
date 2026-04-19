@@ -59,10 +59,22 @@ export const MessageList = ({
         <div style={{ flex: 1, padding: '10px', overflowY: 'auto', backgroundColor: '#fafafa' }}>
             {messages.map((m) => {
                 const isMine = m.userId === currentUserId;
+                const senderName = m.displayName || '名無し';
+
                 return (
                     <div key={m.id} style={{ textAlign: isMine ? 'right' : 'left', marginBottom: '10px' }}>
-                        <div style={{ fontSize: '0.7rem', color: '#666' }}>
-                            {new Date(m.sentAt).toLocaleTimeString()}
+                        <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '4px', padding: '0 4px' }}>
+                            {isMine ? (
+                                <>
+                                    <span style={{ marginRight: '8px' }}>{new Date(m.sentAt).toLocaleTimeString()}</span>
+                                    <span style={{ fontWeight: 'bold' }}>{senderName}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span style={{ fontWeight: 'bold', marginRight: '8px' }}>{senderName}</span>
+                                    <span>{new Date(m.sentAt).toLocaleTimeString()}</span>
+                                </>
+                            )}
                         </div>
                         <div style={{
                             display: 'inline-block',
@@ -71,7 +83,8 @@ export const MessageList = ({
                             backgroundColor: isMine ? '#007bff' : '#e0e0e0',
                             color: isMine ? 'white' : 'black',
                             maxWidth: '80%',
-                            wordBreak: 'break-word'
+                            wordBreak: 'break-word',
+                            textAlign: 'left'
                         }}>
                             {m.type === 'Image' ? (
                                 <ImageBubble

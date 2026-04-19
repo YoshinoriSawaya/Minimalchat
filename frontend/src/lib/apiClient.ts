@@ -5,11 +5,18 @@ const BACKEND_URL = 'http://localhost:5240';
 
 export const roomApi = {
     joinRoom: async (roomId: string, userId: string, displayName: string) => {
-        await fetch(`${BACKEND_URL}/api/rooms/${roomId}/join`, {
+        const res = await fetch(`${BACKEND_URL}/api/rooms/${roomId}/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, displayName })
         });
+        // エラーハンドリング
+        if (!res.ok) {
+            throw new Error('Failed to join room');
+        }
+
+        // バックエンドが返したJSON（RoomName等を含む）をreturnする！
+        return await res.json();
     },
 
     // ▼ 追加: ルームの基本情報（ルーム名など）を取得する
@@ -40,6 +47,7 @@ export const roomApi = {
         return data.map((m: any) => ({
             id: m.id || m.Id,
             userId: m.userId || m.UserId,
+            displayName: m.displayName || m.displayName,
             type: m.type || m.Type,
             content: m.content || m.Content,
             sentAt: m.sentAt || m.SentAt

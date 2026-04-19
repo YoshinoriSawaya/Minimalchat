@@ -22,6 +22,7 @@ export const useSignalR = (roomId: string | undefined, onMessageReceived: (msg: 
             const newMsg: Message = {
                 id: msg.id || msg.Id,
                 userId: msg.userId || msg.UserId,
+                displayName: msg.displayName || msg.DisplayName,
                 type: msg.type || msg.Type,
                 content: msg.content || msg.Content,
                 sentAt: msg.sentAt || msg.SentAt

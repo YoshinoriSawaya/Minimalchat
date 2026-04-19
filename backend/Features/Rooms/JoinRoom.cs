@@ -89,6 +89,7 @@ public static class JoinRoom
             return Results.Ok(new
             {
                 RoomId = roomId,
+                RoomName = room.Name,
                 UserId = request.UserId,
                 JoinedAt = member?.JoinedAt ?? DateTime.UtcNow
             });

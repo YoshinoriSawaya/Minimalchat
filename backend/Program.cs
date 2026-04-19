@@ -23,6 +23,7 @@ app.MapJoinRoomEndpoint();
 app.MapGetMessagesEndpoint();
 app.MapGenerateUploadUrlEndpoint();
 app.MapUpdateRoomEndpoint();
+app.MapGetUserRoomsEndpoint();
 
 // 4. アプリケーション初期化処理 (非同期)
 await app.InitializeInfrastructureAsync();

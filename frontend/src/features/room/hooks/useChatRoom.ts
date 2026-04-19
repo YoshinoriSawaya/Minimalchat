@@ -81,7 +81,14 @@ export const useChatRoom = (roomId: string | undefined, userId: string, displayN
                 }
 
                 // 2. サーバーから最新履歴を取得
-                await roomApi.joinRoom(roomId, userId, displayName);
+                const joinResponse = await roomApi.joinRoom(roomId, userId, displayName);
+                console.log("joinresponse" + joinResponse.toString());
+                if (joinResponse) {
+                    const fetchedRoomName = joinResponse.roomName || joinResponse.RoomName || '';
+                    setRoomName(fetchedRoomName);
+                }
+
+
                 const apiHistory = await roomApi.getHistory(roomId, userId);
 
                 // 3. ローカルに無い新しいメッセージ（自分が入室していない間の通知など）をマージ
