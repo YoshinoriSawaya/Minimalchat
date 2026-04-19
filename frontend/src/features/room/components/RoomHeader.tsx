@@ -9,7 +9,8 @@ export const RoomHeader = ({
     endCall,
     isConnected,
     onUpdateRoomName,    // 追加: ルーム名更新ハンドラー
-    onUpdateDisplayName  // 追加: 自分の名前更新ハンドラー
+    onUpdateDisplayName,  // 追加: 自分の名前更新ハンドラー
+    onBack
 }: {
     roomId: string;
     roomName?: string;
@@ -20,6 +21,7 @@ export const RoomHeader = ({
     isConnected: boolean;
     onUpdateRoomName: (name: string) => void;
     onUpdateDisplayName: (name: string) => void;
+    onBack: () => void;
 }) => {
     // 設定モーダルの開閉状態
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -55,28 +57,52 @@ export const RoomHeader = ({
                 justifyContent: 'space-between',
                 alignItems: 'center'
             }}>
-                {/* 左側: ルーム情報 */}
-                <div>
-                    <h3 style={{ margin: '0 0 5px 0' }}>{displayRoomTitle}</h3>
-                    <p style={{ fontSize: '0.8rem', margin: 0, color: '#555' }}>
-                        あなたのID: {displayName}
-                    </p>
+                {/* 左側: 戻るボタン + ルーム情報 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* 戻るボタン */}
+                    <button
+                        onClick={onBack}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '1.2rem',
+                            cursor: 'pointer',
+                            padding: '5px 8px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e0e0e0')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        title="戻る"
+                    >
+                        ⬅️
+                    </button>
+
+                    <div>
+                        <h3 style={{ margin: '0 0 2px 0', fontSize: '1.1rem' }}>{displayRoomTitle}</h3>
+                        <p style={{ fontSize: '0.75rem', margin: 0, color: '#666' }}>
+                            ID: {displayName}
+                        </p>
+                    </div>
                 </div>
 
                 {/* 右側: アクションボタン */}
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', }}>
                     {!isCalling ? (
                         <button
                             onClick={startCall}
                             disabled={!isConnected}
-                            style={{ background: '#28a745', color: '#fff', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: isConnected ? 'pointer' : 'not-allowed' }}
+                            style={{ display: 'none', background: '#28a745', color: '#fff', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: isConnected ? 'pointer' : 'not-allowed' }}
                         >
                             📞 通話開始
                         </button>
                     ) : (
                         <button
                             onClick={endCall}
-                            style={{ background: '#dc3545', color: '#fff', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                            style={{ display: 'none', background: '#dc3545', color: '#fff', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                         >
                             ⏹ 通話終了
                         </button>

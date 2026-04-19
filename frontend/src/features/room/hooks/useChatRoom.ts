@@ -5,14 +5,13 @@ import { type Message } from '../types';
 import { roomApi } from '../../../lib/apiClient';
 import { processImageWithWasm } from '../../../lib/imageProcessor';
 import { useSignalR } from './useSignalR';
-
-// ★ types.ts の Message 型に `localBlob?: Blob` を追加しておくことを推奨します
+import { useNavigate } from 'react-router-dom'; // 追加
 
 export const useChatRoom = (roomId: string | undefined, userId: string, displayName: string) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isJoined, setIsJoined] = useState(false);
     const isJoining = useRef(false);
-
+    const navigate = useNavigate(); // ここで取得！
     const [roomName, setRoomName] = useState<string>('');
 
     // IndexedDBのインスタンス生成（ルームごとに分離）
@@ -59,6 +58,9 @@ export const useChatRoom = (roomId: string | undefined, userId: string, displayN
     useEffect(() => {
         if (!roomId || !userId || !displayName) {
             console.warn("Missing required parameters for joinRoom");
+            return;
+        }
+        if (displayName.trim() === "") {
             return;
         }
 
@@ -177,6 +179,12 @@ export const useChatRoom = (roomId: string | undefined, userId: string, displayN
         }
     }, [roomId]);
 
+    const handleBack = useCallback(() => {
+        if (window.confirm("ルームを退室しますか？")) {
+            navigate('/'); // navigate を使用
+        }
+    }, [navigate]);
+
     return {
         messages,
         connection,
@@ -184,6 +192,7 @@ export const useChatRoom = (roomId: string | undefined, userId: string, displayN
         updateRoomName,
         sendTextMessage,
         sendImageMessage,
-        markImageAsAccessed
+        markImageAsAccessed,
+        handleBack
     };
 };

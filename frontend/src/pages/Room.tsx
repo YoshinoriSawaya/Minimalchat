@@ -23,7 +23,8 @@ export default function Room() {
         updateRoomName,     // バックエンドAPI & SignalR通知を実行する関数
         sendTextMessage,
         sendImageMessage,
-        markImageAsAccessed
+        markImageAsAccessed,
+        handleBack
     } = useChatRoom(roomId, userId, localDisplayName);
 
     const { startCall, endCall, isCalling, remoteAudioRef } = useWebRTC(connection, roomId, userId);
@@ -52,6 +53,7 @@ export default function Room() {
                 isConnected={isConnected}
                 onUpdateRoomName={updateRoomName} // hook の関数をそのまま渡す
                 onUpdateDisplayName={handleUpdateDisplayName}
+                onBack={handleBack}
             />
 
             <audio ref={remoteAudioRef} autoPlay />

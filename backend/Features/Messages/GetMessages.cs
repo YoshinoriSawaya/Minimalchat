@@ -31,6 +31,8 @@ public static class GetMessages
                 {
                     m.Id,
                     m.UserId,
+                    // ここを追加！ User テーブルから現在の表示名を取得する
+                    DisplayName = m.User != null ? m.User.DisplayName : "Unknown",
                     m.Type,
                     m.Content, // テキスト、またはCloudflare R2の画像URL
                     m.SentAt

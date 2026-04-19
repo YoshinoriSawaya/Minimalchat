@@ -20,16 +20,25 @@ public static class JoinRoom
         app.MapPost("/api/rooms/{roomId:guid}/join", async (Guid roomId, JoinRoomRequest request, AppDbContext db) =>
         {
             // 1. ユーザーの存在確認とUpsert
-            var user = await db.Users.FindAsync(request.UserId);
+            // FindAsync ではなく、追跡を明示的に行うか、FirstDefault を使用
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == request.UserId);
+
             if (user == null)
             {
+                Console.WriteLine($"user == null");
                 user = new User { Id = request.UserId, DisplayName = request.DisplayName };
                 db.Users.Add(user);
             }
+            else if (user.DisplayName != request.DisplayName && !string.IsNullOrWhiteSpace(request.DisplayName))
+            {
+                Console.WriteLine($"user1:{user}");
+                // 名前が本当に変わっている時だけ更新する
+                user.DisplayName = request.DisplayName;
+            }
             else
             {
-                // 既存ユーザーの場合は表示名を最新化
-                user.DisplayName = request.DisplayName;
+                Console.WriteLine($"user2:{user}");
+
             }
 
             // 2. ルームの存在確認
@@ -68,6 +77,12 @@ public static class JoinRoom
                 // ※ もし正確な JoinedAt が必要な場合はここでDBから再取得しますが、
                 // フロントエンド側でこの戻り値を厳密に使っていない場合は、
                 // メモリ上にある member の現在時刻をそのまま返しても実用上問題ありません。
+
+                // 競合時はDBから最新の状態を再取得してレスポンスを作る
+                // これにより、メモリ上の「中途半端な状態」を返さないようにする
+                member = await db.RoomMembers
+                    .AsNoTracking() // 再取得
+                    .FirstOrDefaultAsync(rm => rm.RoomId == roomId && rm.UserId == request.UserId);
             }
 
 
@@ -75,7 +90,7 @@ public static class JoinRoom
             {
                 RoomId = roomId,
                 UserId = request.UserId,
-                JoinedAt = member.JoinedAt
+                JoinedAt = member?.JoinedAt ?? DateTime.UtcNow
             });
         })
         .WithTags("Rooms")
